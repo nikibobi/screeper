@@ -27,7 +27,7 @@ const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => 
 
 const trySpawnOrigin = trySpawn(Game.spawns.Origin);
 
-const visualizePathStyle: PolyStyle = { stroke: "#ffff00", fill: "#ff0000" };
+const visualizePathStyle: PolyStyle = { stroke: "#ffff00", strokeWidth: 0.05, lineStyle: "solid" };
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code

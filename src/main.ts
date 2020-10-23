@@ -1,12 +1,12 @@
 import { ErrorMapper } from 'utils/ErrorMapper';
 
 enum Roles {
-  miner = 'Miner'
+  miner = 'Miner',
 }
 
 enum States {
   harvest = 'Harvest',
-  transfer = 'Transfer'
+  transfer = 'Transfer',
 }
 
 interface CreepBlueprint {
@@ -15,12 +15,12 @@ interface CreepBlueprint {
 }
 
 const blueprints: { [key: string]: CreepBlueprint } = {
-  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner }
+  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner },
 };
 
 const emoji: { [key: string]: string } = {
   [States.harvest]: '🌾',
-  [States.transfer]: '💸'
+  [States.transfer]: '💸',
 };
 
 Creep.prototype.switchState = function (state: States) {

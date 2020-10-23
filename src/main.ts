@@ -4,6 +4,11 @@ enum Roles {
   miner = "Miner"
 }
 
+enum States {
+  harvest = "Harvest",
+  transfer = "Transfer"
+}
+
 interface CreepBlueprint {
   body: BodyPartConstant[];
   role: Roles;
@@ -15,7 +20,7 @@ const blueprints: { [key: string]: CreepBlueprint } = {
 
 const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => {
   const name = `${spawn.name} ${role} ${Game.time % 10000}`;
-  const memory = { memory: { role, spawnId: spawn.id, birthTick: Game.time } };
+  const memory = { memory: { role, spawnId: spawn.id, birthTick: Game.time, state: States.harvest } };
   const canSpawn = spawn.spawnCreep(body, name, { ...memory, dryRun: true }) === OK;
   const creepsCount = _(Game.creeps).filter({ memory: { role } }).size();
   const sourcesCount = spawn.room.find(FIND_SOURCES_ACTIVE).length;
@@ -38,27 +43,44 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
   for (const creepId in Game.creeps) {
     const creep = Game.creeps[creepId];
-    if (creep.memory.role === Roles.miner) {
-      if (creep.store.getFreeCapacity() > 0) {
-        const source = creep.room
-          .find(FIND_SOURCES_ACTIVE)
-          .find((s, i, sources) => creep.memory.birthTick % sources.length === i);
-        if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
-          creep.moveTo(source, { visualizePathStyle });
-        }
-      } else {
-        const spawn = Game.getObjectById(creep.memory.spawnId);
-        if (spawn) {
-          if (spawn.store.getFreeCapacity() === 0) {
-            if (creep.room.controller && creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
-              creep.moveTo(creep.room.controller, { visualizePathStyle });
+    switch (creep.memory.role) {
+      case Roles.miner:
+        switch (creep.memory.state) {
+          case States.harvest:
+            if (creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+              const source = creep.room
+                .find(FIND_SOURCES_ACTIVE)
+                .find((s, i, sources) => creep.memory.birthTick % sources.length === i);
+              if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(source, { visualizePathStyle });
+              }
+            } else {
+              creep.memory.state = States.transfer;
+              creep.say("Transfering");
             }
-          }
-          if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(spawn, { visualizePathStyle });
-          }
+            break;
+          case States.transfer:
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+              const spawn = Game.getObjectById(creep.memory.spawnId);
+              const controller = creep.room.controller;
+              if (spawn && spawn.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                  creep.moveTo(spawn, { visualizePathStyle });
+                }
+              } else if (controller && creep.upgradeController(controller) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(controller, { visualizePathStyle });
+              }
+            } else {
+              creep.memory.state = States.harvest;
+              creep.say("Harvesting");
+            }
+            break;
+          default:
+            break;
         }
-      }
+        break;
+      default:
+        break;
     }
   }
 

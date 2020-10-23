@@ -18,6 +18,16 @@ const blueprints: { [key: string]: CreepBlueprint } = {
   [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner }
 };
 
+const emoji: { [key: string]: string } = {
+  [States.harvest]: "🌾",
+  [States.transfer]: "💸"
+};
+
+Creep.prototype.switchState = function (state: States) {
+  this.memory.state = state;
+  this.say(emoji[state]);
+};
+
 const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => {
   const name = `${spawn.name} ${role} ${Game.time % 10000}`;
   const memory = { memory: { role, spawnId: spawn.id, birthTick: Game.time, state: States.harvest } };
@@ -55,8 +65,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 creep.moveTo(source, { visualizePathStyle });
               }
             } else {
-              creep.memory.state = States.transfer;
-              creep.say("Transfering");
+              creep.switchState(States.transfer);
             }
             break;
           case States.transfer:
@@ -71,8 +80,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 creep.moveTo(controller, { visualizePathStyle });
               }
             } else {
-              creep.memory.state = States.harvest;
-              creep.say("Harvesting");
+              creep.switchState(States.harvest);
             }
             break;
           default:

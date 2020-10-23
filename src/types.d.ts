@@ -2,7 +2,10 @@
 
 type States = "Harvest" | "Transfer";
 
-// memory extension samples
+interface Creep {
+  switchState(state: States): void;
+}
+
 interface CreepMemory {
   role: string;
   spawnId: Id<StructureSpawn>;

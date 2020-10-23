@@ -7,21 +7,19 @@ enum Roles {
 interface CreepBlueprint {
   body: BodyPartConstant[];
   role: Roles;
-  /**
-   * Maximum number of units of this type
-   */
-  max: number;
 }
 
 const blueprints: { [key: string]: CreepBlueprint } = {
-  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner, max: 10 }
+  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner }
 };
 
-const trySpawn = (spawn: StructureSpawn) => ({ body, role, max }: CreepBlueprint) => {
+const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => {
   const name = `${spawn.name} ${role} ${Game.time % 10000}`;
-  const memory = { memory: { role, spawnId: spawn.id } };
+  const memory = { memory: { role, spawnId: spawn.id, birthTick: Game.time } };
   const canSpawn = spawn.spawnCreep(body, name, { ...memory, dryRun: true }) === OK;
-  const shouldSpawn = _(Game.creeps).filter({ memory: { role } }).size() < max;
+  const creepsCount = _(Game.creeps).filter({ memory: { role } }).size();
+  const sourcesCount = spawn.room.find(FIND_SOURCES_ACTIVE).length;
+  const shouldSpawn = creepsCount < 4 * sourcesCount;
   if (canSpawn && shouldSpawn) {
     spawn.spawnCreep(body, name, memory);
   }
@@ -42,14 +40,23 @@ export const loop = ErrorMapper.wrapLoop(() => {
     const creep = Game.creeps[creepId];
     if (creep.memory.role === Roles.miner) {
       if (creep.store.getFreeCapacity() > 0) {
-        const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+        const source = creep.room
+          .find(FIND_SOURCES_ACTIVE)
+          .find((s, i, sources) => creep.memory.birthTick % sources.length === i);
         if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
           creep.moveTo(source, { visualizePathStyle });
         }
       } else {
         const spawn = Game.getObjectById(creep.memory.spawnId);
-        if (spawn && creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-          creep.moveTo(spawn, { visualizePathStyle });
+        if (spawn) {
+          if (spawn.store.getFreeCapacity() === 0) {
+            if (creep.room.controller && creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
+              creep.moveTo(creep.room.controller, { visualizePathStyle });
+            }
+          }
+          if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(spawn, { visualizePathStyle });
+          }
         }
       }
     }

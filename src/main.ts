@@ -7,16 +7,22 @@ enum Roles {
 interface CreepBlueprint {
   body: BodyPartConstant[];
   role: Roles;
+  /**
+   * Maximum number of units of this type
+   */
+  max: number;
 }
 
 const blueprints: { [key: string]: CreepBlueprint } = {
-  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner }
+  [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner, max: 10 }
 };
 
-const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => {
+const trySpawn = (spawn: StructureSpawn) => ({ body, role, max }: CreepBlueprint) => {
   const name = `${spawn.name} ${role} ${Game.time % 10000}`;
   const memory = { memory: { role, spawnId: spawn.id } };
-  if (spawn.spawnCreep(body, name, { ...memory, dryRun: true })) {
+  const canSpawn = spawn.spawnCreep(body, name, { ...memory, dryRun: true }) === OK;
+  const shouldSpawn = _(Game.creeps).filter({ memory: { role } }).size() < max;
+  if (canSpawn && shouldSpawn) {
     spawn.spawnCreep(body, name, memory);
   }
 };
@@ -41,8 +47,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
           creep.moveTo(source, { visualizePathStyle });
         }
       } else {
-        const spawn = Game.spawns[creep.memory.spawnId];
-        if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        const spawn = Game.getObjectById(creep.memory.spawnId);
+        if (spawn && creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
           creep.moveTo(spawn, { visualizePathStyle });
         }
       }

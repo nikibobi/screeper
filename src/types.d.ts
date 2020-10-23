@@ -3,7 +3,7 @@
 // memory extension samples
 interface CreepMemory {
   role: string;
-  spawnId: string;
+  spawnId: Id<StructureSpawn>;
 }
 
 interface Memory {

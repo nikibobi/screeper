@@ -1,6 +1,6 @@
 // example declaration file - remove these and add your own custom typings
 
-type States = "Harvest" | "Transfer";
+type States = 'Harvest' | 'Transfer';
 
 interface Creep {
   switchState(state: States): void;

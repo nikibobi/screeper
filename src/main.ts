@@ -1,12 +1,12 @@
-import { ErrorMapper } from "utils/ErrorMapper";
+import { ErrorMapper } from 'utils/ErrorMapper';
 
 enum Roles {
-  miner = "Miner"
+  miner = 'Miner'
 }
 
 enum States {
-  harvest = "Harvest",
-  transfer = "Transfer"
+  harvest = 'Harvest',
+  transfer = 'Transfer'
 }
 
 interface CreepBlueprint {
@@ -19,8 +19,8 @@ const blueprints: { [key: string]: CreepBlueprint } = {
 };
 
 const emoji: { [key: string]: string } = {
-  [States.harvest]: "🌾",
-  [States.transfer]: "💸"
+  [States.harvest]: '🌾',
+  [States.transfer]: '💸'
 };
 
 Creep.prototype.switchState = function (state: States) {
@@ -42,7 +42,7 @@ const trySpawn = (spawn: StructureSpawn) => ({ body, role }: CreepBlueprint) => 
 
 const trySpawnOrigin = trySpawn(Game.spawns.Origin);
 
-const visualizePathStyle: PolyStyle = { stroke: "#ffff00", strokeWidth: 0.05, lineStyle: "solid" };
+const visualizePathStyle: PolyStyle = { stroke: '#ffff00', strokeWidth: 0.05, lineStyle: 'solid' };
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code

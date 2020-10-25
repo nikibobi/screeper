@@ -1,9 +1,11 @@
+import BuilderRole from 'roles/builder';
 import CreepRole from '../role';
 import MinerRole from '../roles/miner';
 import { Roles } from '../utils/enums';
 
 const rolesMap: { [role: string]: new (creep: Creep) => CreepRole } = {
   [Roles.miner]: MinerRole,
+  [Roles.builder]: BuilderRole,
 };
 
 export function roleFactory(creep: Creep): CreepRole {

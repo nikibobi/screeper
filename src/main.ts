@@ -5,13 +5,11 @@ import { roleFactory } from 'factories/role';
 
 const blueprints: { [key: string]: CreepBlueprint } = {
   [Roles.miner]: { body: [MOVE, WORK, CARRY], role: Roles.miner },
-  [Roles.builder]: { body: [MOVE, WORK, CARRY], role: Roles.builder },
 };
 
 const emoji: { [key: string]: string } = {
   [States.harvest]: '🌾',
   [States.transfer]: '💸',
-  [States.build]: '🏗️',
 };
 
 Creep.prototype.switchState = function (state: States) {
@@ -19,30 +17,13 @@ Creep.prototype.switchState = function (state: States) {
   this.say(emoji[state]);
 };
 
-const shouldSpawnRole: { [key: string]: (spawn: StructureSpawn) => boolean } = {
-  [Roles.miner]: spawn => {
-    const creepsCount = _(Game.creeps)
-      .filter({ memory: { role: Roles.miner } })
-      .size();
-    const sourcesCount = spawn.room.find(FIND_SOURCES_ACTIVE).length;
-    return creepsCount < 4 * sourcesCount;
-  },
-  [Roles.builder]: spawn => {
-    const creepsCount = _(Game.creeps)
-      .filter({ memory: { role: Roles.builder } })
-      .size();
-    const sitesCount = spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length;
-    return sitesCount > 0 && creepsCount < 4;
-  },
-};
-
-const creepSpawnPriority = [Roles.miner, Roles.builder];
-
 StructureSpawn.prototype.trySpawn = function ({ body, role }: CreepBlueprint) {
   const name = `${this.name} ${role} ${Game.time % 10000}`;
-  const memory = { memory: { role, spawnId: this.id, birthTick: Game.time } };
+  const memory = { memory: { role, spawnId: this.id, birthTick: Game.time, state: States.harvest } };
   const canSpawn = this.spawnCreep(body, name, { ...memory, dryRun: true }) === OK;
-  const shouldSpawn = shouldSpawnRole[role](this);
+  const creepsCount = _(Game.creeps).filter({ memory: { role } }).size();
+  const sourcesCount = this.room.find(FIND_SOURCES_ACTIVE).length;
+  const shouldSpawn = creepsCount < 4 * sourcesCount;
   if (canSpawn && shouldSpawn) {
     this.spawnCreep(body, name, memory);
   }
@@ -53,12 +34,7 @@ StructureSpawn.prototype.trySpawn = function ({ body, role }: CreepBlueprint) {
 export const loop = ErrorMapper.wrapLoop(() => {
   console.log(`Current game tick is ${Game.time}`);
 
-  for (const spawnId in Game.spawns) {
-    const spawn = Game.spawns[spawnId];
-    for (const role of creepSpawnPriority) {
-      spawn.trySpawn(blueprints[role]);
-    }
-  }
+  Game.spawns.Origin.trySpawn(blueprints[Roles.miner]);
 
   for (const creepId in Game.creeps) {
     const creep = Game.creeps[creepId];

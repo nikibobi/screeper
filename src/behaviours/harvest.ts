@@ -1,4 +1,5 @@
 import Behavior from 'behavior';
+import { States } from 'utils/enums';
 import { yellowStyle as visualizePathStyle } from 'utils/polystyles';
 
 export default class HarvestBehavior extends Behavior {
@@ -11,6 +12,8 @@ export default class HarvestBehavior extends Behavior {
       if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
         creep.moveTo(source, { visualizePathStyle });
       }
+    } else {
+      creep.switchState(States.transfer);
     }
   }
 }

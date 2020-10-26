@@ -3,7 +3,7 @@ declare global {
     role: string;
     spawnId: Id<StructureSpawn>;
     birthTick: number;
-    state?: string;
+    state: string;
   }
 }
 

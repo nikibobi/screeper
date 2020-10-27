@@ -10,23 +10,22 @@ export default class TransferBehavior extends Behavior {
       const controller = creep.room.controller;
       const sites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
       const hasSite = sites && sites.length > 0 && sites.some(s => s.progress < s.progressTotal);
-      const site = hasSite ? sites.sort((a, b) => b.progress - a.progress)[0] : null;
       const extensions = creep.room.find(FIND_MY_STRUCTURES, {
         filter: { structureType: STRUCTURE_EXTENSION },
       }) as StructureExtension[];
       const hasExtension =
         extensions && extensions.length > 0 && extensions.some(e => e.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
-      const extension = hasExtension
-        ? extensions.sort(
-            (a, b) => a.store.getFreeCapacity(RESOURCE_ENERGY) - b.store.getFreeCapacity(RESOURCE_ENERGY),
-          )[0]
-        : null;
 
-      if (site) {
+      if (hasSite) {
+        const site = sites.sort((a, b) => b.progress - a.progress)[0];
         if (creep.build(site) === ERR_NOT_IN_RANGE) {
           creep.moveTo(site, { visualizePathStyle });
         }
-      } else if (extension) {
+      } else if (hasExtension) {
+        const extension = extensions
+          .filter(e => e.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+          .sort((a, b) => a.store.getFreeCapacity(RESOURCE_ENERGY) - b.store.getFreeCapacity(RESOURCE_ENERGY))[0];
+
         if (creep.transfer(extension, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
           creep.moveTo(extension, { visualizePathStyle });
         }
